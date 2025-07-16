@@ -1,170 +1,95 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+// import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import '../utils/app_logger.dart';
 
+/// Mock Crashlytics Service - Firebase temporarily disabled
 class CrashlyticsService {
-  static final FirebaseCrashlytics _crashlytics = FirebaseCrashlytics.instance;
-
-  // Initialize Crashlytics
+  // Initialize Crashlytics (Mock)
   static Future<void> initialize() async {
-    try {
-      // Set up automatic crash reporting
-      FlutterError.onError = _crashlytics.recordFlutterFatalError;
-
-      // Handle errors outside of Flutter
-      PlatformDispatcher.instance.onError = (error, stack) {
-        _crashlytics.recordError(error, stack, fatal: true);
-        return true;
-      };
-
-      AppLogger.info('Crashlytics: Initialized successfully');
-    } catch (e) {
-      AppLogger.error('Crashlytics: Failed to initialize', e);
-    }
+    AppLogger.info('Crashlytics (Mock): Initialized');
   }
 
-  // User Information
+  // Enable/Disable Crashlytics Collection (Mock)
+  static Future<void> setCrashlyticsCollectionEnabled(bool enabled) async {
+    AppLogger.info('Crashlytics (Mock): Collection enabled: $enabled');
+  }
+
+  // Check if collection is enabled (Mock)
+  static Future<bool> isCrashlyticsCollectionEnabled() async {
+    AppLogger.info('Crashlytics (Mock): Collection status checked');
+    return !kDebugMode;
+  }
+
+  // User Identification (Mock)
   static Future<void> setUserId(String userId) async {
-    try {
-      await _crashlytics.setUserIdentifier(userId);
-      AppLogger.info('Crashlytics: User ID set to $userId');
-    } catch (e) {
-      AppLogger.error('Crashlytics: Failed to set user ID', e);
-    }
+    AppLogger.info('Crashlytics (Mock): User ID set to $userId');
   }
 
   static Future<void> setCustomKey({
     required String key,
-    required Object value,
+    required dynamic value,
   }) async {
-    try {
-      await _crashlytics.setCustomKey(key, value);
-      AppLogger.info('Crashlytics: Custom key set - $key: $value');
-    } catch (e) {
-      AppLogger.error('Crashlytics: Failed to set custom key', e);
-    }
+    AppLogger.info('Crashlytics (Mock): Custom key set - $key: $value');
   }
 
-  // Error Reporting
+  // Error Recording (Mock)
   static Future<void> recordError({
     required dynamic exception,
     StackTrace? stackTrace,
     String? reason,
     bool fatal = false,
-    Iterable<Object> information = const [],
   }) async {
-    try {
-      await _crashlytics.recordError(
-        exception,
-        stackTrace,
-        reason: reason,
-        fatal: fatal,
-        information: information,
-      );
-      AppLogger.info('Crashlytics: Error recorded - $exception');
-    } catch (e) {
-      AppLogger.error('Crashlytics: Failed to record error', e);
-    }
+    AppLogger.error(
+      'Crashlytics (Mock): Error recorded - $exception',
+      exception,
+    );
   }
 
-  static Future<void> recordFlutterError(
-    FlutterErrorDetails errorDetails,
-  ) async {
-    try {
-      await _crashlytics.recordFlutterError(errorDetails);
-      AppLogger.info('Crashlytics: Flutter error recorded');
-    } catch (e) {
-      AppLogger.error('Crashlytics: Failed to record Flutter error', e);
-    }
-  }
-
-  // Logging
-  static Future<void> log(String message) async {
-    try {
-      await _crashlytics.log(message);
-      AppLogger.debug('Crashlytics: Log recorded - $message');
-    } catch (e) {
-      AppLogger.error('Crashlytics: Failed to log message', e);
-    }
-  }
-
-  // Test Crash (for testing purposes only)
-  static void testCrash() {
-    try {
-      _crashlytics.crash();
-    } catch (e) {
-      AppLogger.error('Crashlytics: Failed to trigger test crash', e);
-    }
-  }
-
-  // Check if crash reporting is enabled
-  static Future<bool> isCrashlyticsCollectionEnabled() async {
-    try {
-      return _crashlytics.isCrashlyticsCollectionEnabled;
-    } catch (e) {
-      AppLogger.error('Crashlytics: Failed to check collection status', e);
-      return false;
-    }
-  }
-
-  // Enable/Disable crash reporting
-  static Future<void> setCrashlyticsCollectionEnabled(bool enabled) async {
-    try {
-      await _crashlytics.setCrashlyticsCollectionEnabled(enabled);
-      AppLogger.info(
-        'Crashlytics: Collection ${enabled ? 'enabled' : 'disabled'}',
-      );
-    } catch (e) {
-      AppLogger.error('Crashlytics: Failed to set collection status', e);
-    }
-  }
-
-  // App-specific error handlers
   static Future<void> recordAuthError({
     required String operation,
     required dynamic error,
     StackTrace? stackTrace,
   }) async {
-    await setCustomKey(key: 'auth_operation', value: operation);
-    await recordError(
-      exception: error,
-      stackTrace: stackTrace,
-      reason: 'Authentication Error: $operation',
-      fatal: false,
+    AppLogger.error(
+      'Crashlytics (Mock): Auth error recorded - $operation: $error',
+      error,
     );
   }
 
   static Future<void> recordNetworkError({
-    required String endpoint,
+    required String url,
     required int statusCode,
-    required dynamic error,
-    StackTrace? stackTrace,
+    required String method,
+    dynamic error,
   }) async {
-    await setCustomKey(key: 'network_endpoint', value: endpoint);
-    await setCustomKey(key: 'status_code', value: statusCode);
-    await recordError(
-      exception: error,
-      stackTrace: stackTrace,
-      reason: 'Network Error: $endpoint (Status: $statusCode)',
-      fatal: false,
+    AppLogger.error(
+      'Crashlytics (Mock): Network error recorded - $method $url ($statusCode)',
+      error,
     );
   }
 
   static Future<void> recordMovieError({
+    required String movieId,
     required String operation,
-    String? movieId,
     required dynamic error,
-    StackTrace? stackTrace,
   }) async {
-    await setCustomKey(key: 'movie_operation', value: operation);
-    if (movieId != null) {
-      await setCustomKey(key: 'movie_id', value: movieId);
-    }
-    await recordError(
-      exception: error,
-      stackTrace: stackTrace,
-      reason: 'Movie Error: $operation',
-      fatal: false,
+    AppLogger.error(
+      'Crashlytics (Mock): Movie error recorded - $operation for $movieId: $error',
+      error,
     );
+  }
+
+  // Log Messages (Mock)
+  static Future<void> log(String message) async {
+    AppLogger.info('Crashlytics (Mock): Log - $message');
+  }
+
+  // Test Crash (Mock - only in debug mode)
+  static void testCrash() {
+    if (kDebugMode) {
+      AppLogger.warning(
+        'Crashlytics (Mock): Test crash called (not executed in mock)',
+      );
+    }
   }
 }

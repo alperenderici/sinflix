@@ -8,7 +8,7 @@ import '../services/crashlytics_service.dart';
 import '../utils/app_logger.dart';
 
 // Data Sources
-import '../../data/datasources/auth/auth_remote_datasource.dart';
+import '../../data/datasources/auth/auth_remote_data_source.dart';
 import '../../data/datasources/movies/movies_remote_datasource.dart';
 import '../../data/datasources/profile/profile_remote_datasource.dart';
 
@@ -81,7 +81,7 @@ void _initServices() {
 void _initDataSources() {
   // Auth
   sl.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(dioClient: sl()),
+    () => AuthRemoteDataSourceImpl(sl()),
   );
 
   // Movies

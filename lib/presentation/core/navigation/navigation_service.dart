@@ -5,7 +5,27 @@ import '../../../core/utils/app_logger.dart';
 class NavigationService {
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
-  static late final GoRouter router;
+  static GoRouter? _router;
+
+  static GoRouter get router {
+    if (_router == null) {
+      throw StateError(
+        'NavigationService router has not been initialized. Call NavigationService.initialize() first.',
+      );
+    }
+    return _router!;
+  }
+
+  static void initialize(GoRouter router) {
+    if (_router != null) {
+      AppLogger.debug(
+        'NavigationService router already initialized, skipping...',
+      );
+      return;
+    }
+    _router = router;
+    AppLogger.debug('NavigationService router initialized successfully');
+  }
 
   static BuildContext? get context => navigatorKey.currentContext;
 

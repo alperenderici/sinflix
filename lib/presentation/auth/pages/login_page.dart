@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/analytics_service.dart';
+import '../../../core/utils/platform_utils.dart';
+import '../../../core/constants/app_assets.dart';
+import '../../../src/extensions/shared/widgets/image/asset_image.dart';
+import '../../core/navigation/app_routes.dart';
 import '../../core/navigation/navigation_service.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 
+/// Kullanıcı giriş ekranı - Tasarıma uygun dark theme
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -21,6 +25,16 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
 
   @override
+  void initState() {
+    super.initState();
+    AnalyticsService.logScreenView(screenName: 'login_page');
+
+    // Test için varsayılan değerler (geliştirme aşamasında)
+    _emailController.text = 'safa@nodelabs.com';
+    _passwordController.text = '123456';
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -29,148 +43,336 @@ class _LoginPageState extends State<LoginPage> {
 
   void _login() {
     if (_formKey.currentState?.validate() ?? false) {
+      AnalyticsService.logCustomEvent(
+        eventName: 'login_attempt',
+        parameters: {'method': 'email'},
+      );
+
       context.read<AuthBloc>().add(
-            AuthLoginRequested(
-              email: _emailController.text.trim(),
-              password: _passwordController.text,
-            ),
-          );
+        AuthLoginRequested(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        ),
+      );
     }
+  }
+
+  void _goToRegister() {
+    NavigationService.push(AppRoutes.register);
+  }
+
+  void _forgotPassword() {
+    NavigationService.showSnackBar(
+      message: 'Şifremi unuttum özelliği yakında!',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is AuthAuthenticated) {
-          NavigationService.goToHome();
-        } else if (state is AuthError) {
-          NavigationService.showErrorSnackBar(state.message);
-        }
-      },
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
+    return Scaffold(
+      backgroundColor: const Color(0xFF1A1A1A),
+      body: BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthAuthenticated) {
+            NavigationService.go(AppRoutes.home);
+          } else if (state is AuthError) {
+            NavigationService.showErrorSnackBar(state.message);
+          }
+        },
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Form(
               key: _formKey,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo and Title
-                  const Icon(
-                    Icons.movie,
-                    size: 80,
-                    color: AppColors.primary,
-                  ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 80),
+
+                  // Başlık
                   const Text(
-                    'Welcome Back',
-                    style: AppTextStyles.headlineMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Sign in to continue',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                    'Merhabalar',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 48),
 
-                  // Email Field
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email_outlined),
+                  const SizedBox(height: 12),
+
+                  // Alt başlık
+                  const Text(
+                    'Tempus varius a vitae interdum id\ntortor elementum tristique eleifend at.',
+                    style: TextStyle(
+                      color: Color(0xFF9CA3AF),
+                      fontSize: 16,
+                      height: 1.5,
                     ),
-                    validator: (value) {
-                      if (value?.isEmpty ?? true) {
-                        return 'Email is required';
-                      }
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                          .hasMatch(value!)) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
+                    textAlign: TextAlign.center,
                   ),
+
+                  const SizedBox(height: 60),
+
+                  // Email Input
+                  _buildEmailField(),
+
                   const SizedBox(height: 16),
 
-                  // Password Field
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock_outlined),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
+                  // Password Input
+                  _buildPasswordField(),
+
+                  const SizedBox(height: 16),
+
+                  // Şifremi Unuttum
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: _forgotPassword,
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        'Şifremi unuttum',
+                        style: TextStyle(
+                          color: Color(0xFF9CA3AF),
+                          fontSize: 14,
+                          decoration: TextDecoration.underline,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
                       ),
                     ),
-                    validator: (value) {
-                      if (value?.isEmpty ?? true) {
-                        return 'Password is required';
-                      }
-                      if (value!.length < 6) {
-                        return 'Password must be at least 6 characters';
-                      }
-                      return null;
-                    },
                   ),
-                  const SizedBox(height: 24),
 
-                  // Login Button
-                  BlocBuilder<AuthBloc, AuthState>(
-                    builder: (context, state) {
-                      final isLoading = state is AuthLoginLoading;
-                      
-                      return ElevatedButton(
-                        onPressed: isLoading ? null : _login,
-                        child: isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.onPrimary,
-                                  ),
-                                ),
-                              )
-                            : const Text('Login'),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 40),
 
-                  // Register Link
-                  TextButton(
-                    onPressed: () {
-                      NavigationService.goToRegister();
-                    },
-                    child: const Text("Don't have an account? Register"),
-                  ),
+                  // Giriş Yap Butonu
+                  _buildLoginButton(),
+
+                  const SizedBox(height: 40),
+
+                  // Sosyal Medya Butonları
+                  _buildSocialButtons(),
+
+                  const SizedBox(height: 40),
+
+                  // Kayıt Ol Linki
+                  _buildRegisterLink(),
+
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildEmailField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF3A3A3A)),
+      ),
+      child: TextFormField(
+        controller: _emailController,
+        keyboardType: TextInputType.emailAddress,
+        style: const TextStyle(color: Colors.white),
+        decoration: const InputDecoration(
+          hintText: 'E-Posta',
+          hintStyle: TextStyle(color: Color(0xFF6B7280)),
+          prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF6B7280)),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Email adresi gerekli';
+          }
+          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+            return 'Geçerli bir email adresi girin';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildPasswordField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF3A3A3A)),
+      ),
+      child: TextFormField(
+        controller: _passwordController,
+        obscureText: _obscurePassword,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          hintText: 'Şifre',
+          hintStyle: const TextStyle(color: Color(0xFF6B7280)),
+          prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF6B7280)),
+          suffixIcon: IconButton(
+            icon: Icon(
+              _obscurePassword ? Icons.visibility_off : Icons.visibility,
+              color: const Color(0xFF6B7280),
+            ),
+            onPressed: () {
+              setState(() {
+                _obscurePassword = !_obscurePassword;
+              });
+            },
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Şifre gerekli';
+          }
+          if (value.length < 6) {
+            return 'Şifre en az 6 karakter olmalı';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildLoginButton() {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        final isLoading = state is AuthLoading;
+
+        return Container(
+          height: 56,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFDC2626), Color(0xFFB91C1C)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: ElevatedButton(
+            onPressed: isLoading ? null : _login,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text(
+                    'Giriş Yap',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSocialButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildSocialButton(
+          svgAsset: AppAssets.googleLogo,
+          onPressed: () {
+            NavigationService.showSnackBar(message: 'Google girişi yakında!');
+          },
+        ),
+        if (PlatformUtils.shouldShowAppleSignIn) ...[
+          const SizedBox(width: 16),
+          _buildSocialButton(
+            svgAsset: AppAssets.appleLogo,
+            onPressed: () {
+              NavigationService.showSnackBar(message: 'Apple girişi yakında!');
+            },
+          ),
+        ],
+        const SizedBox(width: 16),
+        _buildSocialButton(
+          svgAsset: AppAssets.facebookLogo,
+          onPressed: () {
+            NavigationService.showSnackBar(message: 'Facebook girişi yakında!');
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSocialButton({
+    required String svgAsset,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        color: const Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF3A3A3A)),
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        icon: AImage(
+          imgPath: svgAsset,
+          width: 24,
+          height: 24,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRegisterLink() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text(
+          'Bir hesabın yok mu? ',
+          style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+        ),
+        TextButton(
+          onPressed: _goToRegister,
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.zero,
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: const Text(
+            'Kayıt Ol!',
+            style: TextStyle(
+              color: Color(0xFFDC2626),
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

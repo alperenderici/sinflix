@@ -1,11 +1,16 @@
 import 'package:dartz/dartz.dart';
 import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
+import '../../core/services/analytics_service.dart';
+import '../../core/services/crashlytics_service.dart';
 import '../../core/utils/app_logger.dart';
 import '../../core/utils/secure_storage_manager.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
-import '../datasources/auth/auth_remote_datasource.dart';
+import '../datasources/auth/auth_remote_data_source.dart';
+import '../models/auth/login_request.dart';
+import '../models/auth/register_response.dart';
+import '../models/user_model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
@@ -18,31 +23,51 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) async {
     try {
-      final authResponse = await remoteDataSource.login(
-        email: email,
-        password: password,
+      AppLogger.debug('Repository: Attempting login for $email');
+
+      // LoginRequest oluştur
+      final loginRequest = LoginRequest(email: email, password: password);
+
+      // API çağrısı yap - direkt UserModel döndürüyor
+      final userModel = await remoteDataSource.login(loginRequest);
+
+      // Kullanıcı bilgilerini güvenli storage'a kaydet
+      await SecureStorageManager.saveUserId(userModel.id);
+      await SecureStorageManager.saveUserEmail(userModel.email);
+
+      // Analytics: Login event'i logla
+      await AnalyticsService.logLogin(method: 'email');
+      await AnalyticsService.setUserId(userModel.id);
+
+      // Crashlytics: Kullanıcı bilgilerini set et
+      await CrashlyticsService.setUserId(userModel.id);
+      await CrashlyticsService.setCustomKey(key: 'user_email', value: email);
+
+      AppLogger.info('User logged in successfully: $email');
+
+      // User entity'sini döndür
+      return Right(userModel.toEntity());
+    } catch (e) {
+      AppLogger.error('Login failed', e);
+
+      // Crashlytics: Auth error'u logla
+      await CrashlyticsService.recordAuthError(
+        operation: 'login',
+        error: e,
+        stackTrace: StackTrace.current,
       );
 
-      // Save tokens to secure storage
-      await SecureStorageManager.saveAccessToken(authResponse.accessToken);
-      await SecureStorageManager.saveRefreshToken(authResponse.refreshToken);
-      await SecureStorageManager.saveUserId(authResponse.user.id);
-      await SecureStorageManager.saveUserEmail(authResponse.user.email);
-
-      AppLogger.info('User logged in successfully: ${authResponse.user.email}');
-      return Right(authResponse.user.toEntity());
-    } on AuthenticationException catch (e) {
-      AppLogger.error('Authentication failed', e);
-      return Left(AuthenticationFailure(message: e.message));
-    } on NetworkException catch (e) {
-      AppLogger.error('Network error during login', e);
-      return Left(NetworkFailure(message: e.message));
-    } on ServerException catch (e) {
-      AppLogger.error('Server error during login', e);
-      return Left(ServerFailure(message: e.message));
-    } catch (e) {
-      AppLogger.error('Unknown error during login', e);
-      return Left(UnknownFailure(message: e.toString()));
+      // Exception tipine göre failure döndür
+      if (e.toString().contains('401') ||
+          e.toString().contains('Email veya şifre hatalı')) {
+        return Left(AuthenticationFailure(message: 'Email veya şifre hatalı'));
+      } else if (e.toString().contains('İnternet bağlantınızı kontrol edin')) {
+        return Left(
+          NetworkFailure(message: 'İnternet bağlantınızı kontrol edin'),
+        );
+      } else {
+        return Left(ServerFailure(message: e.toString()));
+      }
     }
   }
 
@@ -53,20 +78,23 @@ class AuthRepositoryImpl implements AuthRepository {
     String? name,
   }) async {
     try {
-      final authResponse = await remoteDataSource.register(
-        email: email,
-        password: password,
-        name: name,
+      final registerResponse = await remoteDataSource.register(
+        name ?? '',
+        email,
+        password,
       );
 
-      // Save tokens to secure storage
-      await SecureStorageManager.saveAccessToken(authResponse.accessToken);
-      await SecureStorageManager.saveRefreshToken(authResponse.refreshToken);
-      await SecureStorageManager.saveUserId(authResponse.user.id);
-      await SecureStorageManager.saveUserEmail(authResponse.user.email);
+      // Token'ı güvenli storage'a kaydet
+      await SecureStorageManager.saveAccessToken(registerResponse.token);
 
-      AppLogger.info('User registered successfully: ${authResponse.user.email}');
-      return Right(authResponse.user.toEntity());
+      // User bilgilerini kaydet
+      await SecureStorageManager.saveUserId(registerResponse.user.id);
+      await SecureStorageManager.saveUserEmail(registerResponse.user.email);
+
+      AppLogger.info(
+        'User registered successfully: ${registerResponse.user.email}',
+      );
+      return Right(registerResponse.user.toEntity());
     } on ValidationException catch (e) {
       AppLogger.error('Validation error during registration', e);
       return Left(ValidationFailure(message: e.message));
@@ -87,7 +115,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await remoteDataSource.logout();
       await SecureStorageManager.clearAuthData();
-      
+
       AppLogger.info('User logged out successfully');
       return const Right(null);
     } on NetworkException catch (e) {
@@ -135,19 +163,16 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final refreshToken = await SecureStorageManager.getRefreshToken();
       if (refreshToken == null) {
-        return const Left(AuthenticationFailure(message: 'No refresh token found'));
+        return const Left(
+          AuthenticationFailure(message: 'No refresh token found'),
+        );
       }
 
-      final authResponse = await remoteDataSource.refreshToken(
-        refreshToken: refreshToken,
+      // TODO: Implement refresh token API call
+      AppLogger.info('Refresh token not implemented yet');
+      return const Left(
+        ServerFailure(message: 'Refresh token not implemented'),
       );
-
-      // Update tokens in secure storage
-      await SecureStorageManager.saveAccessToken(authResponse.accessToken);
-      await SecureStorageManager.saveRefreshToken(authResponse.refreshToken);
-
-      AppLogger.info('Token refreshed successfully');
-      return Right(authResponse.user.toEntity());
     } on AuthenticationException catch (e) {
       AppLogger.error('Authentication error refreshing token', e);
       await SecureStorageManager.clearAuthData();
@@ -165,9 +190,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, void>> forgotPassword({
-    required String email,
-  }) async {
+  Future<Either<Failure, void>> forgotPassword({required String email}) async {
     try {
       await remoteDataSource.forgotPassword(email: email);
       AppLogger.info('Password reset email sent to: $email');

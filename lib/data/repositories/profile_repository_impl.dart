@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:sinflix/data/models/user_model.dart';
 import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
 import '../../core/utils/app_logger.dart';
@@ -68,7 +69,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
     required String filePath,
   }) async {
     try {
-      final url = await remoteDataSource.uploadProfilePicture(filePath: filePath);
+      final url = await remoteDataSource.uploadProfilePicture(
+        filePath: filePath,
+      );
       AppLogger.info('Uploaded profile picture: $url');
       return Right(url);
     } on ValidationException catch (e) {
@@ -99,7 +102,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         page: page,
         limit: limit,
       );
-      
+
       final movies = movieModels.map((model) => model.toEntity()).toList();
       AppLogger.info('Retrieved ${movies.length} favorite movies');
       return Right(movies);
@@ -169,7 +172,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
     required String movieId,
   }) async {
     try {
-      final isFavorite = await remoteDataSource.isMovieFavorite(movieId: movieId);
+      final isFavorite = await remoteDataSource.isMovieFavorite(
+        movieId: movieId,
+      );
       AppLogger.debug('Movie $movieId favorite status: $isFavorite');
       return Right(isFavorite);
     } on AuthenticationException catch (e) {

@@ -2,9 +2,9 @@ class AppConstants {
   AppConstants._();
 
   // API Configuration
-  static const String baseUrl = 'https://api.sinflix.com';
-  static const String apiVersion = 'v1';
-  static const String apiUrl = '$baseUrl/$apiVersion';
+  static const String baseUrl = 'https://caseapi.servicelabs.tech';
+  static const String apiVersion = '';
+  static const String apiUrl = baseUrl;
 
   // Pagination
   static const int defaultPageSize = 5;
