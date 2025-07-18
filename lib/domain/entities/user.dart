@@ -1,47 +1,14 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class User extends Equatable {
-  final String id;
-  final String email;
-  final String? name;
-  final String? profilePictureUrl;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+part 'user.freezed.dart';
 
-  const User({
-    required this.id,
-    required this.email,
-    this.name,
-    this.profilePictureUrl,
-    required this.createdAt,
-    required this.updatedAt,
-  });
-
-  User copyWith({
-    String? id,
-    String? email,
-    String? name,
-    String? profilePictureUrl,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) {
-    return User(
-      id: id ?? this.id,
-      email: email ?? this.email,
-      name: name ?? this.name,
-      profilePictureUrl: profilePictureUrl ?? this.profilePictureUrl,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
-
-  @override
-  List<Object?> get props => [
-        id,
-        email,
-        name,
-        profilePictureUrl,
-        createdAt,
-        updatedAt,
-      ];
+/// User domain entity - API response'a uygun Freezed ile immutable
+@freezed
+class User with _$User {
+  const factory User({
+    required String id,
+    required String name,
+    required String email,
+    String? photoUrl,
+  }) = _User;
 }

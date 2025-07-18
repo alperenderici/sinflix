@@ -18,6 +18,7 @@ class AppRoutes {
 
   // Profile Routes
   static const String editProfile = '/profile/edit';
+  static const String uploadPhoto = '/profile/upload-photo';
   static const String settings = '/settings';
 
   // Debug Routes

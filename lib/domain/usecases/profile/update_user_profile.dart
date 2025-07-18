@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
-import '../../../core/errors/failures.dart';
+import '../../../core/error/failures.dart';
 import '../../../core/usecases/usecase.dart';
 import '../../entities/user.dart';
 import '../../repositories/profile_repository.dart';
@@ -23,10 +23,7 @@ class UpdateUserProfileParams extends Equatable {
   final String? name;
   final String? profilePictureUrl;
 
-  const UpdateUserProfileParams({
-    this.name,
-    this.profilePictureUrl,
-  });
+  const UpdateUserProfileParams({this.name, this.profilePictureUrl});
 
   @override
   List<Object?> get props => [name, profilePictureUrl];

@@ -1,42 +1,37 @@
-import 'package:json_annotation/json_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../domain/entities/user.dart';
 
+part 'user_model.freezed.dart';
 part 'user_model.g.dart';
 
-@JsonSerializable()
-class UserModel extends User {
-  const UserModel({
-    required super.id,
-    required super.email,
-    super.name,
-    super.profilePictureUrl,
-    required super.createdAt,
-    required super.updatedAt,
-  });
+/// User data model - API response'a uygun Freezed ile
+@freezed
+class UserModel with _$UserModel {
+  const factory UserModel({
+    required String id,
+    required String name,
+    required String email,
+    String? photoUrl,
+  }) = _UserModel;
 
-  factory UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
+  factory UserModel.fromJson(Map<String, dynamic> json) =>
+      _$UserModelFromJson(json);
+}
 
-  Map<String, dynamic> toJson() => _$UserModelToJson(this);
-
-  factory UserModel.fromEntity(User user) {
-    return UserModel(
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      profilePictureUrl: user.profilePictureUrl,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    );
+/// UserModel extension - Entity dönüşümü için
+extension UserModelX on UserModel {
+  /// Model'i domain entity'sine çevir
+  User toEntity() {
+    return User(id: id, name: name, email: email, photoUrl: photoUrl);
   }
 
-  User toEntity() {
-    return User(
-      id: id,
-      email: email,
-      name: name,
-      profilePictureUrl: profilePictureUrl,
-      createdAt: createdAt,
-      updatedAt: updatedAt,
+  /// Entity'den model oluştur
+  static UserModel fromEntity(User user) {
+    return UserModel(
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      photoUrl: user.photoUrl,
     );
   }
 }

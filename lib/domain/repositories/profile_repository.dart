@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import '../../core/errors/failures.dart';
+import '../../core/error/failures.dart';
 import '../entities/movie.dart';
 import '../entities/user.dart';
 
@@ -20,17 +20,11 @@ abstract class ProfileRepository {
     int limit = 10,
   });
 
-  Future<Either<Failure, void>> addToFavorites({
-    required String movieId,
-  });
+  Future<Either<Failure, void>> addToFavorites({required String movieId});
 
-  Future<Either<Failure, void>> removeFromFavorites({
-    required String movieId,
-  });
+  Future<Either<Failure, void>> removeFromFavorites({required String movieId});
 
-  Future<Either<Failure, bool>> isMovieFavorite({
-    required String movieId,
-  });
+  Future<Either<Failure, bool>> isMovieFavorite({required String movieId});
 
   Future<Either<Failure, void>> clearFavorites();
 }

@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import '../../core/errors/failures.dart';
+import '../../core/error/failures.dart';
 import '../entities/user.dart';
 
 abstract class AuthRepository {
@@ -20,9 +20,7 @@ abstract class AuthRepository {
 
   Future<Either<Failure, User>> refreshToken();
 
-  Future<Either<Failure, void>> forgotPassword({
-    required String email,
-  });
+  Future<Either<Failure, void>> forgotPassword({required String email});
 
   Future<Either<Failure, void>> resetPassword({
     required String token,

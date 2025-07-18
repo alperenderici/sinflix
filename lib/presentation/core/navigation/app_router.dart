@@ -9,6 +9,7 @@ import '../../auth/pages/splash_page.dart';
 import '../../debug/pages/firebase_test_page.dart';
 import '../../home/pages/home_page.dart';
 import '../../profile/pages/profile_page.dart';
+import '../../profile/pages/upload_photo_page.dart';
 import '../../shared_widgets/main_wrapper.dart';
 import 'app_routes.dart';
 import 'navigation_service.dart';
@@ -53,10 +54,6 @@ class AppRouter {
               path: AppRoutes.profile,
               builder: (context, state) => const ProfilePage(),
             ),
-            GoRoute(
-              path: AppRoutes.favorites,
-              builder: (context, state) => const FavoritesPage(),
-            ),
           ],
         ),
 
@@ -79,6 +76,12 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.editProfile,
           builder: (context, state) => const EditProfilePage(),
+        ),
+
+        // Upload Photo Route
+        GoRoute(
+          path: AppRoutes.uploadPhoto,
+          builder: (context, state) => const UploadPhotoPage(),
         ),
 
         // Settings Route
@@ -104,14 +107,6 @@ class AppRouter {
 }
 
 // Placeholder pages - these would be implemented in their respective feature folders
-class FavoritesPage extends StatelessWidget {
-  const FavoritesPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: Text('Favorites Page')));
-  }
-}
 
 class MovieDetailsPage extends StatelessWidget {
   final String movieId;

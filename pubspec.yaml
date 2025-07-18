@@ -1,5 +1,5 @@
 name: sinflix
-description: "A new Flutter project."
+description: "SinFlix - Premium Movie Streaming App"
 
 publish_to: 'none'
 
@@ -16,10 +16,14 @@ dependencies:
 
   # UI & Icons
   cupertino_icons: ^1.0.8
+  flutter_svg: ^2.0.10+1
 
   # State Management
   flutter_bloc: ^8.1.6
   equatable: ^2.0.5
+
+  # Immutable Data Classes
+  freezed_annotation: ^2.4.4
 
   # Networking
   dio: ^5.7.0
@@ -38,14 +42,15 @@ dependencies:
 
   # Image Handling
   cached_network_image: ^3.4.1
+  image_picker: ^1.1.2
 
   # Logging
   logger: ^2.4.0
 
-  # Firebase
-  firebase_core: ^3.8.0
-  firebase_crashlytics: ^4.1.8
-  firebase_analytics: ^11.3.8
+  # Firebase (temporarily disabled)
+  # firebase_core: ^3.8.0
+  # firebase_crashlytics: ^4.1.8
+  # firebase_analytics: ^11.3.8
 
   # Animations
   lottie: ^3.2.0
@@ -65,6 +70,7 @@ dev_dependencies:
   build_runner: ^2.4.13
   flutter_gen_runner: ^5.8.0
   json_serializable: ^6.8.0
+  freezed: ^2.5.7
 
   # App Configuration
   flutter_native_splash: ^2.4.1
@@ -77,6 +83,8 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/icons/
+    - assets/lottie/
     - assets/lottie/
 
   # fonts:
@@ -112,3 +120,8 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/images/sinflix_logo.png"
   min_sdk_android: 21
+  # Android adaptive icon
+  adaptive_icon_background: "#1a1a1a"
+  adaptive_icon_foreground: "assets/images/sinflix_logo.png"
+  # Remove old launcher icons
+  remove_alpha_ios: true
