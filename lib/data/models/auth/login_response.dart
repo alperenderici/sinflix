@@ -1,19 +1,19 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import '../user_model.dart';
 
-part 'register_response.freezed.dart';
-part 'register_response.g.dart';
+part 'login_response.freezed.dart';
+part 'login_response.g.dart';
 
-/// API'den dönen register response modeli
+/// API'den dönen login response modeli
 /// API response: { "token": "string", "user": { "id": "string", "name": "string", "email": "string" } }
 @freezed
-class RegisterResponse with _$RegisterResponse {
-  const factory RegisterResponse({
+class LoginResponse with _$LoginResponse {
+  const factory LoginResponse({
     required String token,
     required UserModel user,
-  }) = _RegisterResponse;
+  }) = _LoginResponse;
 
-  factory RegisterResponse.fromJson(Map<String, dynamic> json) {
+  factory LoginResponse.fromJson(Map<String, dynamic> json) {
     // API response yapısı: { "response": {...}, "data": { "token": "...", "user": {...} } }
     final data = json['data'] as Map<String, dynamic>;
 
@@ -21,7 +21,7 @@ class RegisterResponse with _$RegisterResponse {
     final userData = Map<String, dynamic>.from(data);
     userData.remove('token'); // token'ı user data'sından çıkar
 
-    return RegisterResponse(
+    return LoginResponse(
       token: data['token'] as String,
       user: UserModel.fromJson(userData),
     );

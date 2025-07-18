@@ -121,6 +121,10 @@ class NavigationService {
     go('/profile/edit');
   }
 
+  static void goToUploadPhoto() {
+    go('/profile/upload-photo');
+  }
+
   static void goToSettings() {
     go('/settings');
   }

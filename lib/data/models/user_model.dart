@@ -1,5 +1,4 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:json_annotation/json_annotation.dart';
 import '../../domain/entities/user.dart';
 
 part 'user_model.freezed.dart';
@@ -12,7 +11,7 @@ class UserModel with _$UserModel {
     required String id,
     required String name,
     required String email,
-    @JsonKey(name: 'photoUrl') String? photoUrl,
+    String? photoUrl,
   }) = _UserModel;
 
   factory UserModel.fromJson(Map<String, dynamic> json) =>
@@ -23,12 +22,7 @@ class UserModel with _$UserModel {
 extension UserModelX on UserModel {
   /// Model'i domain entity'sine çevir
   User toEntity() {
-    return User(
-      id: id,
-      name: name,
-      email: email,
-      photoUrl: photoUrl,
-    );
+    return User(id: id, name: name, email: email, photoUrl: photoUrl);
   }
 
   /// Entity'den model oluştur

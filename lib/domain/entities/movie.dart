@@ -3,6 +3,11 @@ import 'package:equatable/equatable.dart';
 class Movie extends Equatable {
   final String id;
   final String title;
+  final String description;
+  final String posterUrl;
+  final bool isFavorite;
+
+  // Legacy fields for backward compatibility
   final String? overview;
   final String? posterPath;
   final String? backdropPath;
@@ -18,6 +23,9 @@ class Movie extends Equatable {
   const Movie({
     required this.id,
     required this.title,
+    required this.description,
+    required this.posterUrl,
+    this.isFavorite = false,
     this.overview,
     this.posterPath,
     this.backdropPath,
@@ -34,6 +42,9 @@ class Movie extends Equatable {
   Movie copyWith({
     String? id,
     String? title,
+    String? description,
+    String? posterUrl,
+    bool? isFavorite,
     String? overview,
     String? posterPath,
     String? backdropPath,
@@ -49,6 +60,9 @@ class Movie extends Equatable {
     return Movie(
       id: id ?? this.id,
       title: title ?? this.title,
+      description: description ?? this.description,
+      posterUrl: posterUrl ?? this.posterUrl,
+      isFavorite: isFavorite ?? this.isFavorite,
       overview: overview ?? this.overview,
       posterPath: posterPath ?? this.posterPath,
       backdropPath: backdropPath ?? this.backdropPath,
@@ -75,18 +89,21 @@ class Movie extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        title,
-        overview,
-        posterPath,
-        backdropPath,
-        voteAverage,
-        voteCount,
-        releaseDate,
-        genres,
-        runtime,
-        originalLanguage,
-        adult,
-        popularity,
-      ];
+    id,
+    title,
+    description,
+    posterUrl,
+    isFavorite,
+    overview,
+    posterPath,
+    backdropPath,
+    voteAverage,
+    voteCount,
+    releaseDate,
+    genres,
+    runtime,
+    originalLanguage,
+    adult,
+    popularity,
+  ];
 }

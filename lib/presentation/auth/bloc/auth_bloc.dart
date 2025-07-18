@@ -79,7 +79,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           value: user.email,
         );
 
-        emit(AuthAuthenticated(user: user));
+        // Check if emit is still valid before calling
+        if (!emit.isDone) {
+          emit(AuthAuthenticated(user: user));
+        }
       },
     );
   }
@@ -118,7 +121,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           value: user.email,
         );
 
-        emit(AuthAuthenticated(user: user));
+        // Check if emit is still valid before calling
+        if (!emit.isDone) {
+          emit(AuthAuthenticated(user: user));
+        }
       },
     );
   }

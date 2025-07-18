@@ -29,7 +29,7 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
     AnalyticsService.logScreenView(screenName: 'login_page');
 
-    // Test için varsayılan değerler (geliştirme aşamasında)
+    // Test için geçici veriler
     _emailController.text = 'safa@nodelabs.com';
     _passwordController.text = '123456';
   }
@@ -74,7 +74,7 @@ class _LoginPageState extends State<LoginPage> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            NavigationService.go(AppRoutes.home);
+            NavigationService.goToHome();
           } else if (state is AuthError) {
             NavigationService.showErrorSnackBar(state.message);
           }
@@ -183,7 +183,7 @@ class _LoginPageState extends State<LoginPage> {
         keyboardType: TextInputType.emailAddress,
         style: const TextStyle(color: Colors.white),
         decoration: const InputDecoration(
-          hintText: 'E-Posta',
+          hintText: 'ornek@email.com',
           hintStyle: TextStyle(color: Color(0xFF6B7280)),
           prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF6B7280)),
           border: InputBorder.none,
@@ -214,7 +214,7 @@ class _LoginPageState extends State<LoginPage> {
         obscureText: _obscurePassword,
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
-          hintText: 'Şifre',
+          hintText: 'En az 6 karakter',
           hintStyle: const TextStyle(color: Color(0xFF6B7280)),
           prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF6B7280)),
           suffixIcon: IconButton(

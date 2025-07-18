@@ -1,13 +1,15 @@
 import 'package:dio/dio.dart';
+import '../../../core/constants/api_endpoints.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../models/auth/login_request.dart';
+import '../../models/auth/login_response.dart';
 import '../../models/auth/register_response.dart';
 import '../../models/user_model.dart';
 
 /// Auth işlemleri için remote data source interface
 abstract class AuthRemoteDataSource {
-  Future<UserModel> login(LoginRequest request);
+  Future<LoginResponse> login(LoginRequest request);
   Future<RegisterResponse> register(String name, String email, String password);
   Future<UserModel> getCurrentUser();
   Future<void> logout();
@@ -32,20 +34,20 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   AuthRemoteDataSourceImpl(this._dioClient);
 
   @override
-  Future<UserModel> login(LoginRequest request) async {
+  Future<LoginResponse> login(LoginRequest request) async {
     try {
       AppLogger.debug('Attempting login for: ${request.email}');
 
       // API endpoint: /user/login (POST)
       final response = await _dioClient.post(
-        '/user/login',
+        ApiEndpoints.login,
         data: request.toJson(),
       );
 
       AppLogger.debug('Login response received');
 
-      // Response'u UserModel'e çevir (API direkt user bilgilerini döndürüyor)
-      return UserModel.fromJson(response.data);
+      // Response'u LoginResponse'e çevir (API token ve user döndürüyor)
+      return LoginResponse.fromJson(response.data);
     } on DioException catch (e) {
       AppLogger.error('Login failed', e);
       throw _handleDioException(e);
@@ -65,11 +67,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       AppLogger.debug('Attempting registration for: $email');
 
       final response = await _dioClient.post(
-        '/user/register',
+        ApiEndpoints.register,
         data: {'name': name, 'email': email, 'password': password},
       );
 
       AppLogger.debug('Registration response received');
+
+      // Response'u RegisterResponse'e çevir (API data wrapper'ı içinde döndürüyor)
       return RegisterResponse.fromJson(response.data);
     } on DioException catch (e) {
       AppLogger.error('Registration failed', e);
@@ -85,10 +89,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       AppLogger.debug('Getting current user');
 
-      final response = await _dioClient.get('/user/me');
+      final response = await _dioClient.get(ApiEndpoints.profile);
 
       AppLogger.debug('Current user response received');
-      return UserModel.fromJson(response.data['user'] ?? response.data);
+      // API response yapısı: { "response": {...}, "data": { "id": "...", "name": "...", "email": "...", "photoUrl": "..." } }
+      final data = response.data['data'] as Map<String, dynamic>;
+      return UserModel.fromJson(data);
     } on DioException catch (e) {
       AppLogger.error('Get current user failed', e);
       throw _handleDioException(e);
