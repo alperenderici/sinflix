@@ -8,9 +8,9 @@ class AppRoutes {
 
   // Main Routes
   static const String main = '/main';
-  static const String home = '/main/home';
-  static const String profile = '/main/profile';
-  static const String favorites = '/main/favorites';
+  static const String home = '/home';
+  static const String profile = '/profile';
+  static const String favorites = '/favorites';
 
   // Movie Routes
   static const String movieDetails = '/movie/:id';
@@ -20,9 +20,6 @@ class AppRoutes {
   static const String editProfile = '/profile/edit';
   static const String uploadPhoto = '/profile/upload-photo';
   static const String settings = '/settings';
-
-  // Debug Routes
-  static const String firebaseTest = '/firebase-test';
 
   // Error Routes
   static const String notFound = '/404';

@@ -4,6 +4,15 @@ import '../../../core/constants/app_colors.dart';
 class LimitedOfferBottomSheet extends StatelessWidget {
   const LimitedOfferBottomSheet({super.key});
 
+  static void show(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const LimitedOfferBottomSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -18,7 +27,7 @@ class LimitedOfferBottomSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 20),
-          
+
           // Title
           const Text(
             'Sınırlı Teklif',
@@ -28,22 +37,18 @@ class LimitedOfferBottomSheet extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           // Subtitle
           const Text(
             'Jeton paketini seçerek bonus\nkazanın ve yeni bölümlerin kilidini açın!',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-              height: 1.4,
-            ),
+            style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Bonuses Section
           const Text(
             'Alacağınız Bonuslar',
@@ -53,9 +58,9 @@ class LimitedOfferBottomSheet extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Bonus Icons Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -82,9 +87,9 @@ class LimitedOfferBottomSheet extends StatelessWidget {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 32),
-          
+
           // Package Selection Title
           const Text(
             'Kilidi açmak için bir jeton paketi seçin',
@@ -94,9 +99,9 @@ class LimitedOfferBottomSheet extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Package Cards
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -141,9 +146,9 @@ class LimitedOfferBottomSheet extends StatelessWidget {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Show All Tokens Button
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -163,15 +168,12 @@ class LimitedOfferBottomSheet extends StatelessWidget {
                 ),
                 child: const Text(
                   'Tüm Jetonları Gör',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
           ),
-          
+
           const SizedBox(height: 20),
         ],
       ),
@@ -193,11 +195,7 @@ class LimitedOfferBottomSheet extends StatelessWidget {
             shape: BoxShape.circle,
             border: Border.all(color: color, width: 2),
           ),
-          child: Icon(
-            icon,
-            color: color,
-            size: 28,
-          ),
+          child: Icon(icon, color: color, size: 28),
         ),
         const SizedBox(height: 8),
         Text(
@@ -248,9 +246,9 @@ class LimitedOfferBottomSheet extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Original Price (crossed out)
           Text(
             originalPrice,
@@ -260,7 +258,7 @@ class LimitedOfferBottomSheet extends StatelessWidget {
               decoration: TextDecoration.lineThrough,
             ),
           ),
-          
+
           // Discounted Price
           Text(
             discountedPrice,
@@ -270,7 +268,7 @@ class LimitedOfferBottomSheet extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          
+
           // Currency
           Text(
             currency,
@@ -280,9 +278,9 @@ class LimitedOfferBottomSheet extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Weekly Price
           Container(
             width: double.infinity,
@@ -306,10 +304,7 @@ class LimitedOfferBottomSheet extends StatelessWidget {
                 ),
                 const Text(
                   'Başına haftalık',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 10,
-                  ),
+                  style: TextStyle(color: Colors.white70, fontSize: 10),
                 ),
               ],
             ),

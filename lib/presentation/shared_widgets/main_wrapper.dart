@@ -12,50 +12,97 @@ class MainWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: child,
-      bottomNavigationBar: _buildBottomNavigationBar(context),
+      bottomNavigationBar: _buildNavigationButtons(context),
     );
   }
 
-  Widget _buildBottomNavigationBar(BuildContext context) {
+  Widget _buildNavigationButtons(BuildContext context) {
     final String location = GoRouterState.of(context).uri.path;
 
-    int selectedIndex = 0;
-    if (location.startsWith(AppRoutes.home)) {
-      selectedIndex = 0;
-    } else if (location.startsWith(AppRoutes.profile)) {
-      selectedIndex = 1;
-    }
+    final bool isHomeSelected = location.startsWith(AppRoutes.home);
+    final bool isProfileSelected = location.startsWith(AppRoutes.profile);
 
-    return BottomNavigationBar(
-      currentIndex: selectedIndex,
-      onTap: (index) => _onItemTapped(context, index),
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: AppColors.surface,
-      selectedItemColor: AppColors.primary,
-      unselectedItemColor: AppColors.onSurfaceVariant,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home),
-          label: 'Anasayfa',
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            // Anasayfa Button
+            Expanded(
+              child: _buildNavigationButton(
+                context: context,
+                label: 'Anasayfa',
+                icon: Icons.home,
+                isSelected: isHomeSelected,
+                onTap: () => context.go(AppRoutes.home),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Profil Button
+            Expanded(
+              child: _buildNavigationButton(
+                context: context,
+                label: 'Profil',
+                icon: Icons.person,
+                isSelected: isProfileSelected,
+                onTap: () => context.go(AppRoutes.profile),
+              ),
+            ),
+          ],
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          activeIcon: Icon(Icons.person),
-          label: 'Profil',
-        ),
-      ],
+      ),
     );
   }
 
-  void _onItemTapped(BuildContext context, int index) {
-    switch (index) {
-      case 0:
-        context.go(AppRoutes.home);
-        break;
-      case 1:
-        context.go(AppRoutes.profile);
-        break;
-    }
+  Widget _buildNavigationButton({
+    required BuildContext context,
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(25),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.onSurfaceVariant,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : AppColors.onSurfaceVariant,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : AppColors.onSurfaceVariant,
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

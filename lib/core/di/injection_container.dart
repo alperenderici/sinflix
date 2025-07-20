@@ -34,8 +34,11 @@ import '../../domain/usecases/movie/toggle_favorite.dart';
 import '../../domain/usecases/movies/get_movies.dart' as legacy_movies;
 import '../../domain/usecases/movies/get_movie_details.dart';
 import '../../domain/usecases/movies/search_movies.dart';
+import '../../domain/usecases/movies/toggle_favorite_movie.dart';
+import '../../domain/usecases/movies/get_favorite_movies.dart' as movies;
 import '../../domain/usecases/profile/get_user_profile.dart';
 import '../../domain/usecases/profile/update_user_profile.dart';
+import '../../domain/usecases/profile/upload_profile_picture.dart';
 import '../../domain/usecases/profile/get_favorite_movies.dart'
     as legacy_favorites;
 import '../../domain/usecases/profile/add_to_favorites.dart';
@@ -144,10 +147,13 @@ void _initUseCases() {
   sl.registerLazySingleton(() => legacy_movies.GetMovies(sl()));
   sl.registerLazySingleton(() => GetMovieDetails(sl()));
   sl.registerLazySingleton(() => SearchMovies(sl()));
+  sl.registerLazySingleton(() => ToggleFavoriteMovie(sl()));
+  sl.registerLazySingleton(() => movies.GetFavoriteMovies(sl()));
 
   // Profile Use Cases
   sl.registerLazySingleton(() => GetUserProfile(sl()));
   sl.registerLazySingleton(() => UpdateUserProfile(sl()));
+  sl.registerLazySingleton(() => UploadProfilePicture(sl()));
   sl.registerLazySingleton(() => legacy_favorites.GetFavoriteMovies(sl()));
   sl.registerLazySingleton(() => AddToFavorites(sl()));
   sl.registerLazySingleton(() => RemoveFromFavorites(sl()));
@@ -179,6 +185,7 @@ void _initBlocs() {
       getMovies: sl<legacy_movies.GetMovies>(),
       getMovieDetails: sl(),
       searchMovies: sl(),
+      toggleFavoriteMovie: sl(),
     ),
   );
 
@@ -187,7 +194,8 @@ void _initBlocs() {
     () => ProfileBloc(
       getUserProfile: sl(),
       updateUserProfile: sl(),
-      getFavoriteMovies: sl(),
+      uploadProfilePicture: sl(),
+      getFavoriteMovies: sl<movies.GetFavoriteMovies>(),
       addToFavorites: sl(),
       removeFromFavorites: sl(),
     ),

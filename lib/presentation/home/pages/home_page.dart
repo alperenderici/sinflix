@@ -1,13 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_text_styles.dart';
 import '../../../core/di/injection_container.dart';
-import '../../../core/gen/assets.gen.dart';
 import '../../../domain/entities/movie.dart';
-import '../../core/navigation/app_routes.dart';
-import '../../core/navigation/navigation_service.dart';
+import '../../shared_widgets/movie_image_widget.dart';
 import '../bloc/movies_bloc.dart';
 import '../bloc/movies_event.dart';
 import '../bloc/movies_state.dart';
@@ -63,44 +59,13 @@ class _HomePageContentState extends State<_HomePageContent> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Assets.images.sinflixLogo.image(height: 40, fit: BoxFit.contain),
-          ],
-        ),
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: Colors.white),
-            onPressed: () {
-              // TODO: Navigate to search page
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-            onPressed: () {
-              // TODO: Show notifications
-            },
-          ),
-          if (kDebugMode)
-            IconButton(
-              icon: const Icon(Icons.bug_report, color: Colors.white),
-              onPressed: () {
-                NavigationService.push(AppRoutes.firebaseTest);
-              },
-              tooltip: 'Firebase Test',
-            ),
-        ],
-      ),
       body: BlocBuilder<MoviesBloc, MoviesState>(
         builder: (context, state) {
           return RefreshIndicator(
             onRefresh: () async {
-              context.read<MoviesBloc>().add(
-                const MoviesLoadRequested(isRefresh: true),
-              );
+              context.read<MoviesBloc>().add(const MoviesRefreshRequested());
+              // Wait a bit for the refresh to complete
+              await Future.delayed(const Duration(milliseconds: 500));
             },
             child: CustomScrollView(
               controller: _scrollController,
@@ -108,10 +73,25 @@ class _HomePageContentState extends State<_HomePageContent> {
                 // Featured Section
                 SliverToBoxAdapter(child: _buildFeaturedSection()),
 
+                // Movies Section Title
+                SliverToBoxAdapter(
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(16, 32, 16, 16),
+                    child: const Text(
+                      'Popüler Filmler',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+
                 // Movies Grid
                 if (state is MoviesLoaded) ...[
                   SliverPadding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     sliver: SliverGrid(
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
@@ -173,190 +153,184 @@ class _HomePageContentState extends State<_HomePageContent> {
   }
 
   Widget _buildFeaturedSection() {
-    return Container(
-      height: 300,
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
-        ),
-        image: const DecorationImage(
-          image: NetworkImage(
-            'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', // Placeholder movie poster
-          ),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Öne Çıkan Film',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+    return SizedBox(
+      height: MediaQuery.of(context).size.height,
+      child: Stack(
+        children: [
+          // Background Image
+          Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: NetworkImage(
+                  'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',
+                ),
+                fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Günün en popüler filmi',
-              style: TextStyle(color: Colors.white70, fontSize: 16),
+          ),
+          // Gradient Overlay
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.3),
+                  Colors.black.withValues(alpha: 0.8),
+                ],
+                stops: const [0.0, 0.5, 1.0],
+              ),
             ),
-            const SizedBox(height: 16),
-            Row(
+          ),
+          // Top Actions (Search, Notifications)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 16,
+            right: 16,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.play_arrow),
-                  label: const Text('İzle'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
+                // Logo placeholder
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'SinFlix',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.add),
-                  label: const Text('Listem'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white),
-                  ),
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.search, color: Colors.white),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.black.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(
+                        Icons.notifications_outlined,
+                        color: Colors.white,
+                      ),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.black.withValues(alpha: 0.3),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          // Movie Info and Actions
+          Positioned(
+            bottom: 120,
+            left: 20,
+            right: 20,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Öne Çıkan Film',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Günün en popüler filmi. Aksiyon dolu sahneler ve muhteşem görsel efektlerle dolu bu yapım sizi ekrana kilitleyecek.',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {},
+                        icon: const Icon(Icons.play_arrow, size: 24),
+                        label: const Text(
+                          'İzle',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {},
+                        icon: const Icon(Icons.add, size: 24),
+                        label: const Text(
+                          'Listem',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white, width: 2),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildMovieCard(Movie movie) {
-    return GestureDetector(
+    return MoviePosterCard(
+      movie: movie,
       onTap: () {
         // TODO: Navigate to movie details
       },
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Movie Poster
-              Expanded(
-                flex: 4,
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceVariant,
-                    image: DecorationImage(
-                      image: NetworkImage(movie.posterUrl),
-                      fit: BoxFit.cover,
-                      onError: (exception, stackTrace) {
-                        // Fallback to placeholder
-                      },
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      // Favorite button
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.6),
-                            shape: BoxShape.circle,
-                          ),
-                          child: IconButton(
-                            icon: Icon(
-                              movie.isFavorite
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color: movie.isFavorite
-                                  ? Colors.red
-                                  : Colors.white,
-                              size: 20,
-                            ),
-                            onPressed: () {
-                              // TODO: Implement favorite toggle
-                              // context.read<MoviesBloc>().add(
-                              //   MovieFavoriteToggleRequested(
-                              //     movieId: movie.id,
-                              //     isFavorite: !movie.isFavorite,
-                              //   ),
-                              // );
-                            },
-                            padding: const EdgeInsets.all(4),
-                            constraints: const BoxConstraints(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Movie Info
-              Container(
-                color: AppColors.surface,
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      movie.title,
-                      style: AppTextStyles.titleSmall.copyWith(
-                        color: AppColors.onSurface,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.star, size: 16, color: Colors.amber),
-                        const SizedBox(width: 4),
-                        Text(
-                          movie.voteAverage?.toStringAsFixed(1) ?? '0.0',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.onSurface,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '2023',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.onSurface.withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
+      onFavoriteToggle: () {
+        context.read<MoviesBloc>().add(
+          MovieFavoriteToggleRequested(
+            movieId: movie.id,
+            isFavorite: !movie.isFavorite,
           ),
-        ),
-      ),
+        );
+      },
+      showFavoriteButton: true,
     );
   }
 }

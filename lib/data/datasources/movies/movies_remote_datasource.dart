@@ -1,10 +1,15 @@
 import '../../../core/network/dio_client.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../models/movie_model.dart';
 
 abstract class MoviesRemoteDataSource {
   Future<List<MovieModel>> getMovies({int page = 1, int limit = 5});
 
   Future<MovieModel> getMovieDetails({required String movieId});
+
+  Future<List<MovieModel>> getFavoriteMovies();
+
+  Future<Map<String, dynamic>> toggleFavorite({required String movieId});
 
   Future<List<MovieModel>> searchMovies({
     required String query,
@@ -49,6 +54,29 @@ class MoviesRemoteDataSourceImpl implements MoviesRemoteDataSource {
   Future<MovieModel> getMovieDetails({required String movieId}) async {
     final response = await dioClient.get('/movies/$movieId');
     return MovieModel.fromJson(response.data);
+  }
+
+  @override
+  Future<List<MovieModel>> getFavoriteMovies() async {
+    AppLogger.debug('Getting favorite movies...');
+    final response = await dioClient.get('/movie/favorites');
+
+    AppLogger.debug('Favorite movies response: ${response.data}');
+
+    // API response yapısı: { "movies": [...] }
+    final List<dynamic> moviesJson = response.data['movies'] ?? [];
+    AppLogger.debug('Found ${moviesJson.length} favorite movies');
+
+    return moviesJson.map((json) => MovieModel.fromJson(json)).toList();
+  }
+
+  @override
+  Future<Map<String, dynamic>> toggleFavorite({required String movieId}) async {
+    final response = await dioClient.post('/movie/favorite/$movieId');
+
+    // API response: { "response": {...}, "data": { "movie": {...}, "action": "favorited/unfavorited" } }
+    final data = response.data['data'] as Map<String, dynamic>;
+    return data;
   }
 
   @override

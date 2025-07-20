@@ -4,6 +4,7 @@ import '../../../core/utils/app_logger.dart';
 import '../../../domain/usecases/movies/get_movie_details.dart';
 import '../../../domain/usecases/movies/get_movies.dart';
 import '../../../domain/usecases/movies/search_movies.dart';
+import '../../../domain/usecases/movies/toggle_favorite_movie.dart';
 import 'movies_event.dart';
 import 'movies_state.dart';
 
@@ -11,11 +12,13 @@ class MoviesBloc extends Bloc<MoviesEvent, MoviesState> {
   final GetMovies getMovies;
   final GetMovieDetails getMovieDetails;
   final SearchMovies searchMovies;
+  final ToggleFavoriteMovie toggleFavoriteMovie;
 
   MoviesBloc({
     required this.getMovies,
     required this.getMovieDetails,
     required this.searchMovies,
+    required this.toggleFavoriteMovie,
   }) : super(const MoviesInitial()) {
     on<MoviesLoadRequested>(_onMoviesLoadRequested);
     on<MoviesLoadMoreRequested>(_onMoviesLoadMoreRequested);
@@ -47,11 +50,13 @@ class MoviesBloc extends Bloc<MoviesEvent, MoviesState> {
       },
       (movies) {
         AppLogger.info('Loaded ${movies.length} movies');
-        emit(MoviesLoaded(
-          movies: movies,
-          hasReachedMax: movies.length < AppConstants.defaultPageSize,
-          currentPage: 1,
-        ));
+        emit(
+          MoviesLoaded(
+            movies: movies,
+            hasReachedMax: movies.length < AppConstants.defaultPageSize,
+            currentPage: 1,
+          ),
+        );
       },
     );
   }
@@ -61,7 +66,9 @@ class MoviesBloc extends Bloc<MoviesEvent, MoviesState> {
     Emitter<MoviesState> emit,
   ) async {
     final currentState = state;
-    if (currentState is! MoviesLoaded || currentState.hasReachedMax || currentState.isLoadingMore) {
+    if (currentState is! MoviesLoaded ||
+        currentState.hasReachedMax ||
+        currentState.isLoadingMore) {
       return;
     }
 
@@ -81,12 +88,14 @@ class MoviesBloc extends Bloc<MoviesEvent, MoviesState> {
       (newMovies) {
         AppLogger.info('Loaded ${newMovies.length} more movies');
         final allMovies = List.of(currentState.movies)..addAll(newMovies);
-        emit(MoviesLoaded(
-          movies: allMovies,
-          hasReachedMax: newMovies.length < AppConstants.defaultPageSize,
-          currentPage: nextPage,
-          isLoadingMore: false,
-        ));
+        emit(
+          MoviesLoaded(
+            movies: allMovies,
+            hasReachedMax: newMovies.length < AppConstants.defaultPageSize,
+            currentPage: nextPage,
+            isLoadingMore: false,
+          ),
+        );
       },
     );
   }
@@ -116,18 +125,24 @@ class MoviesBloc extends Bloc<MoviesEvent, MoviesState> {
     result.fold(
       (failure) {
         AppLogger.error('Failed to search movies: ${failure.message}');
-        emit(MoviesSearchError(
-          message: failure.message ?? 'Failed to search movies',
-          query: event.query,
-        ));
+        emit(
+          MoviesSearchError(
+            message: failure.message ?? 'Failed to search movies',
+            query: event.query,
+          ),
+        );
       },
       (movies) {
-        AppLogger.info('Found ${movies.length} movies for query: ${event.query}');
-        emit(MoviesSearchLoaded(
-          movies: movies,
-          query: event.query,
-          hasReachedMax: movies.length < AppConstants.defaultPageSize,
-        ));
+        AppLogger.info(
+          'Found ${movies.length} movies for query: ${event.query}',
+        );
+        emit(
+          MoviesSearchLoaded(
+            movies: movies,
+            query: event.query,
+            hasReachedMax: movies.length < AppConstants.defaultPageSize,
+          ),
+        );
       },
     );
   }
@@ -148,12 +163,18 @@ class MoviesBloc extends Bloc<MoviesEvent, MoviesState> {
 
     AppLogger.debug('Loading movie details for ID: ${event.movieId}');
 
-    final result = await getMovieDetails(GetMovieDetailsParams(movieId: event.movieId));
+    final result = await getMovieDetails(
+      GetMovieDetailsParams(movieId: event.movieId),
+    );
 
     result.fold(
       (failure) {
         AppLogger.error('Failed to load movie details: ${failure.message}');
-        emit(MovieDetailsError(message: failure.message ?? 'Failed to load movie details'));
+        emit(
+          MovieDetailsError(
+            message: failure.message ?? 'Failed to load movie details',
+          ),
+        );
       },
       (movie) {
         AppLogger.info('Loaded movie details: ${movie.title}');
@@ -167,11 +188,32 @@ class MoviesBloc extends Bloc<MoviesEvent, MoviesState> {
     Emitter<MoviesState> emit,
   ) async {
     AppLogger.debug('Toggling favorite for movie: ${event.movieId}');
-    
-    // TODO: Implement favorite toggle logic
-    // This would typically involve calling a use case to add/remove from favorites
-    // and then updating the UI state accordingly
-    
-    AppLogger.info('Movie ${event.movieId} ${event.isFavorite ? 'added to' : 'removed from'} favorites');
+
+    final result = await toggleFavoriteMovie(
+      ToggleFavoriteMovieParams(movieId: event.movieId),
+    );
+
+    result.fold(
+      (failure) {
+        AppLogger.error('Failed to toggle favorite: ${failure.message}');
+        // Optionally emit an error state or show a snackbar
+      },
+      (response) {
+        AppLogger.info('Movie ${event.movieId} favorite toggled successfully');
+
+        // Update the current state to reflect the change
+        if (state is MoviesLoaded) {
+          final currentState = state as MoviesLoaded;
+          final updatedMovies = currentState.movies.map((movie) {
+            if (movie.id == event.movieId) {
+              return movie.copyWith(isFavorite: !movie.isFavorite);
+            }
+            return movie;
+          }).toList();
+
+          emit(currentState.copyWith(movies: updatedMovies));
+        }
+      },
+    );
   }
 }

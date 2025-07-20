@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/services/analytics_service.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/platform_utils.dart';
 import '../../../core/constants/app_assets.dart';
 import '../../../src/extensions/shared/widgets/image/asset_image.dart';
@@ -28,10 +29,6 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
     AnalyticsService.logScreenView(screenName: 'login_page');
-
-    // Test için geçici veriler
-    _emailController.text = 'safa@nodelabs.com';
-    _passwordController.text = '123456';
   }
 
   @override
@@ -73,9 +70,14 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: const Color(0xFF1A1A1A),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
+          AppLogger.debug(
+            'Login page: Auth state changed to ${state.runtimeType}',
+          );
           if (state is AuthAuthenticated) {
+            AppLogger.info('Login page: Navigating to home...');
             NavigationService.goToHome();
           } else if (state is AuthError) {
+            AppLogger.error('Login page: Auth error - ${state.message}');
             NavigationService.showErrorSnackBar(state.message);
           }
         },
@@ -250,7 +252,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildLoginButton() {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
-        final isLoading = state is AuthLoading;
+        final isLoading = state is AuthLoading || state is AuthLoginLoading;
 
         return Container(
           height: 56,

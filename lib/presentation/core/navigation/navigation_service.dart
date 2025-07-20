@@ -96,11 +96,11 @@ class NavigationService {
   }
 
   static void goToHome() {
-    go('/main/home');
+    go('/home');
   }
 
   static void goToProfile() {
-    go('/main/profile');
+    go('/profile');
   }
 
   static void goToFavorites() {

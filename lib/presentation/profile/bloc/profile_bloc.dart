@@ -1,29 +1,35 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/usecases/usecase.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/utils/secure_storage_manager.dart';
 import '../../../domain/usecases/profile/add_to_favorites.dart';
-import '../../../domain/usecases/profile/get_favorite_movies.dart';
+import '../../../domain/usecases/movies/get_favorite_movies.dart' as movies;
 import '../../../domain/usecases/profile/get_user_profile.dart';
 import '../../../domain/usecases/profile/remove_from_favorites.dart';
 import '../../../domain/usecases/profile/update_user_profile.dart';
+import '../../../domain/usecases/profile/upload_profile_picture.dart';
 import 'profile_event.dart';
 import 'profile_state.dart';
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final GetUserProfile getUserProfile;
   final UpdateUserProfile updateUserProfile;
-  final GetFavoriteMovies getFavoriteMovies;
+  final UploadProfilePicture uploadProfilePicture;
+  final movies.GetFavoriteMovies getFavoriteMovies;
   final AddToFavorites addToFavorites;
   final RemoveFromFavorites removeFromFavorites;
 
   ProfileBloc({
     required this.getUserProfile,
     required this.updateUserProfile,
+    required this.uploadProfilePicture,
     required this.getFavoriteMovies,
     required this.addToFavorites,
     required this.removeFromFavorites,
   }) : super(const ProfileInitial()) {
     on<ProfileLoadRequested>(_onProfileLoadRequested);
     on<ProfileUpdateRequested>(_onProfileUpdateRequested);
+    on<ProfilePictureUploadRequested>(_onProfilePictureUploadRequested);
     on<FavoriteMoviesLoadRequested>(_onFavoriteMoviesLoadRequested);
     on<FavoriteMoviesLoadMoreRequested>(_onFavoriteMoviesLoadMoreRequested);
     on<FavoriteMovieAddRequested>(_onFavoriteMovieAddRequested);
@@ -91,6 +97,37 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     );
   }
 
+  Future<void> _onProfilePictureUploadRequested(
+    ProfilePictureUploadRequested event,
+    Emitter<ProfileState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is! ProfileLoaded) return;
+
+    emit(currentState.copyWith(isUploadingPicture: true));
+
+    AppLogger.debug('Uploading profile picture...');
+
+    final result = await uploadProfilePicture(
+      UploadProfilePictureParams(filePath: event.filePath),
+    );
+
+    result.fold(
+      (failure) {
+        AppLogger.error('Failed to upload profile picture: ${failure.message}');
+        emit(currentState.copyWith(isUploadingPicture: false));
+        emit(
+          ProfileError(message: failure.message ?? 'Failed to upload picture'),
+        );
+      },
+      (imageUrl) {
+        AppLogger.info('Uploaded profile picture: $imageUrl');
+        emit(currentState.copyWith(isUploadingPicture: false));
+        emit(ProfilePictureUploadSuccess(imageUrl: imageUrl));
+      },
+    );
+  }
+
   Future<void> _onFavoriteMoviesLoadRequested(
     FavoriteMoviesLoadRequested event,
     Emitter<ProfileState> emit,
@@ -100,9 +137,13 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
     AppLogger.debug('Loading favorite movies...');
 
-    final result = await getFavoriteMovies(
-      const GetFavoriteMoviesParams(page: 1),
+    // Token'ı kontrol et
+    final token = await SecureStorageManager.getAccessToken();
+    AppLogger.debug(
+      'Token for favorite movies: ${token != null ? "Found (${token.substring(0, 20)}...)" : "Not found"}',
     );
+
+    final result = await getFavoriteMovies(NoParams());
 
     result.fold(
       (failure) {
@@ -142,9 +183,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     final nextPage = currentState.currentFavoritesPage + 1;
     AppLogger.debug('Loading more favorite movies (page $nextPage)...');
 
-    final result = await getFavoriteMovies(
-      GetFavoriteMoviesParams(page: nextPage),
-    );
+    final result = await getFavoriteMovies(NoParams());
 
     result.fold(
       (failure) {

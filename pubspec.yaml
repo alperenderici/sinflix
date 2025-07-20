@@ -36,13 +36,16 @@ dependencies:
 
   # Storage
   flutter_secure_storage: ^9.2.2
+  path_provider: ^2.1.4
 
   # Localization
   intl: ^0.20.2
 
   # Image Handling
   cached_network_image: ^3.4.1
+  flutter_cache_manager: ^3.4.1
   image_picker: ^1.1.2
+  flutter_image_compress: ^2.3.0
 
   # Logging
   logger: ^2.4.0

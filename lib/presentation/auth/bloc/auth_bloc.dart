@@ -60,8 +60,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       LoginParams(email: event.email, password: event.password),
     );
 
-    result.fold(
-      (failure) {
+    await result.fold(
+      (failure) async {
         AppLogger.error('Login failed: ${failure.message}');
         emit(AuthError(message: failure.message ?? 'Login failed'));
       },
@@ -79,7 +79,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           value: user.email,
         );
 
-        // Check if emit is still valid before calling
         if (!emit.isDone) {
           emit(AuthAuthenticated(user: user));
         }

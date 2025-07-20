@@ -38,4 +38,10 @@ abstract class MoviesRepository {
     int page = 1,
     int limit = 5,
   });
+
+  Future<Either<Failure, List<Movie>>> getFavoriteMovies();
+
+  Future<Either<Failure, Map<String, dynamic>>> toggleFavorite({
+    required String movieId,
+  });
 }

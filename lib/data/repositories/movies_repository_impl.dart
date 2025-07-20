@@ -222,4 +222,43 @@ class MoviesRepositoryImpl implements MoviesRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, List<Movie>>> getFavoriteMovies() async {
+    try {
+      final movieModels = await remoteDataSource.getFavoriteMovies();
+      final movies = movieModels.map((model) => model.toEntity()).toList();
+      AppLogger.info('Retrieved ${movies.length} favorite movies');
+      return Right(movies);
+    } on NetworkException catch (e) {
+      AppLogger.error('Network error getting favorite movies', e);
+      return Left(NetworkFailure(e.message));
+    } on ServerException catch (e) {
+      AppLogger.error('Server error getting favorite movies', e);
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      AppLogger.error('Unknown error getting favorite movies', e);
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> toggleFavorite({
+    required String movieId,
+  }) async {
+    try {
+      final result = await remoteDataSource.toggleFavorite(movieId: movieId);
+      AppLogger.info('Toggled favorite for movie: $movieId');
+      return Right(result);
+    } on NetworkException catch (e) {
+      AppLogger.error('Network error toggling favorite', e);
+      return Left(NetworkFailure(e.message));
+    } on ServerException catch (e) {
+      AppLogger.error('Server error toggling favorite', e);
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      AppLogger.error('Unknown error toggling favorite', e);
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

@@ -6,7 +6,7 @@ import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/pages/login_page.dart';
 import '../../auth/pages/register_page.dart';
 import '../../auth/pages/splash_page.dart';
-import '../../debug/pages/firebase_test_page.dart';
+
 import '../../home/pages/home_page.dart';
 import '../../profile/pages/profile_page.dart';
 import '../../profile/pages/upload_photo_page.dart';
@@ -88,12 +88,6 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.settings,
           builder: (context, state) => const SettingsPage(),
-        ),
-
-        // Firebase Test Route (Debug only)
-        GoRoute(
-          path: AppRoutes.firebaseTest,
-          builder: (context, state) => const FirebaseTestPage(),
         ),
       ],
       errorBuilder: (context, state) => const NotFoundPage(),

@@ -125,14 +125,16 @@ class DioClient {
         case DioExceptionType.badResponse:
           final statusCode = error.response?.statusCode;
           final message = error.response?.data?['message'] ?? 'Server error';
-          
+
           if (statusCode == 401) {
             return AuthenticationException(message: message);
           } else if (statusCode == 403) {
             return AuthorizationException(message: message);
           } else if (statusCode == 404) {
             return NotFoundException(message: message);
-          } else if (statusCode != null && statusCode >= 400 && statusCode < 500) {
+          } else if (statusCode != null &&
+              statusCode >= 400 &&
+              statusCode < 500) {
             return ValidationException(message: message);
           } else {
             return ServerException(message: message, statusCode: statusCode);
@@ -151,10 +153,14 @@ class DioClient {
 
 class _AuthInterceptor extends Interceptor {
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     final token = await SecureStorageManager.getAccessToken();
     if (token != null) {
-      options.headers['Authorization'] = 'Bearer $token';
+      options.headers['Authorization'] =
+          token; // Direct token without Bearer prefix
     }
     handler.next(options);
   }
@@ -189,14 +195,18 @@ class _LoggingInterceptor extends Interceptor {
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    AppLogger.debug('RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}');
+    AppLogger.debug(
+      'RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}',
+    );
     AppLogger.debug('Data: ${response.data}');
     handler.next(response);
   }
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    AppLogger.error('ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path}');
+    AppLogger.error(
+      'ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path}',
+    );
     AppLogger.error('Message: ${err.message}');
     if (err.response?.data != null) {
       AppLogger.error('Error Data: ${err.response?.data}');

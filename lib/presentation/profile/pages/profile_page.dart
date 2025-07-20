@@ -6,9 +6,10 @@ import '../../../domain/entities/movie.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_state.dart';
 import '../../core/navigation/navigation_service.dart';
-import '../../movie/bloc/movie_bloc.dart';
-import '../../movie/bloc/movie_event.dart';
-import '../../movie/bloc/movie_state.dart';
+import '../../shared_widgets/movie_image_widget.dart';
+import '../bloc/profile_bloc.dart';
+import '../bloc/profile_event.dart';
+import '../bloc/profile_state.dart';
 import '../widgets/limited_offer_bottom_sheet.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -19,25 +20,27 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  late MovieBloc _movieBloc;
+  late ProfileBloc _profileBloc;
 
   @override
   void initState() {
     super.initState();
-    _movieBloc = sl<MovieBloc>();
-    _movieBloc.add(LoadFavoriteMovies());
+    _profileBloc = sl<ProfileBloc>();
+    _profileBloc.add(const ProfileLoadRequested());
+    // Favori filmleri yükle
+    _profileBloc.add(const FavoriteMoviesLoadRequested(isRefresh: true));
   }
 
   @override
   void dispose() {
-    _movieBloc.close();
+    _profileBloc.close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
-      providers: [BlocProvider.value(value: _movieBloc)],
+      providers: [BlocProvider.value(value: _profileBloc)],
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthUnauthenticated) {
@@ -46,130 +49,200 @@ class _ProfilePageState extends State<ProfilePage> {
         },
         child: Scaffold(
           backgroundColor: AppColors.background,
-          appBar: AppBar(
-            backgroundColor: AppColors.background,
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            title: const Text(
-              'Profil Detayı',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            centerTitle: true,
-            actions: [
-              Container(
-                margin: const EdgeInsets.only(right: 16),
-                child: ElevatedButton(
-                  onPressed: () {
-                    _showLimitedOfferBottomSheet(context);
+          body: Column(
+            children: [
+              // Custom App Bar
+              _buildCustomAppBar(context),
+              // Content
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    _profileBloc.add(const ProfileLoadRequested());
+                    _profileBloc.add(
+                      const FavoriteMoviesLoadRequested(isRefresh: true),
+                    );
+                    await Future.delayed(const Duration(milliseconds: 500));
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        // Profile Header
+                        _buildProfileHeader(context),
+
+                        const SizedBox(height: 32),
+
+                        // Liked Movies Section
+                        _buildLikedMoviesSection(context),
+                      ],
                     ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.favorite, size: 16),
-                      const SizedBox(width: 4),
-                      const Text(
-                        'Sınırlı Teklif',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    ],
                   ),
                 ),
               ),
             ],
-          ),
-          body: SingleChildScrollView(
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
-                // Profile Header
-                _buildProfileHeader(context),
-
-                const SizedBox(height: 32),
-
-                // Liked Movies Section
-                _buildLikedMoviesSection(context),
-              ],
-            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildProfileHeader(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, state) {
-        String userName = 'Ayça Aydoğan';
-        String userId = 'ID: 245677';
+  Widget _buildCustomAppBar(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 16,
+        left: 16,
+        right: 16,
+        bottom: 16,
+      ),
+      child: Row(
+        children: [
+          // Geri Butonu
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.3),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.arrow_back,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+          ),
 
-        if (state is AuthAuthenticated) {
+          const Spacer(),
+
+          // Profil Detayı Başlığı
+          const Text(
+            'Profil Detayı',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          const Spacer(),
+
+          // Sınırlı Teklif Butonu
+          GestureDetector(
+            onTap: () => LimitedOfferBottomSheet.show(context),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.favorite, color: Colors.white, size: 16),
+                  SizedBox(width: 4),
+                  Text(
+                    'Sınırlı Teklif',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader(BuildContext context) {
+    return BlocBuilder<ProfileBloc, ProfileState>(
+      builder: (context, state) {
+        String userName = 'Kullanıcı';
+        String userId = '000000';
+        String? photoUrl;
+
+        if (state is ProfileLoaded) {
           userName = state.user.name;
-          // You can add user ID to your user model if needed
+          userId = state.user.id;
+          photoUrl = state.user.photoUrl;
+        } else if (state is ProfileLoading) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (state is ProfileError) {
+          return Center(
+            child: Column(
+              children: [
+                Icon(Icons.error_outline, color: Colors.red, size: 48),
+                const SizedBox(height: 16),
+                Text(
+                  'Profil yüklenirken hata oluştu',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  state.message,
+                  style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    _profileBloc.add(const ProfileLoadRequested());
+                  },
+                  child: const Text('Tekrar Dene'),
+                ),
+              ],
+            ),
+          );
         }
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
+          child: Row(
             children: [
               // Profile Picture
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.grey.shade700, width: 2),
-                ),
-                child: ClipOval(
-                  child: Container(
-                    color: Colors.grey.shade800,
-                    child: const Icon(
-                      Icons.person,
-                      size: 40,
-                      color: Colors.white,
+              ProfileImageWidget(
+                imageUrl: photoUrl,
+                size: 80,
+                onTap: () {
+                  NavigationService.goToUploadPhoto();
+                },
+              ),
+
+              const SizedBox(width: 16),
+
+              // User Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // User Name
+                    Text(
+                      userName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
+
+                    const SizedBox(height: 4),
+
+                    // User ID
+                    Text(
+                      'ID: $userId',
+                      style: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-
-              const SizedBox(height: 16),
-
-              // User Name
-              Text(
-                userName,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-
-              const SizedBox(height: 4),
-
-              // User ID
-              Text(
-                userId,
-                style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-              ),
-
-              const SizedBox(height: 20),
 
               // Add Photo Button
               ElevatedButton(
@@ -183,13 +256,13 @@ class _ProfilePageState extends State<ProfilePage> {
                     borderRadius: BorderRadius.circular(25),
                   ),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
+                    horizontal: 16,
+                    vertical: 10,
                   ),
                 ),
                 child: const Text(
                   'Fotoğraf Ekle',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                 ),
               ),
             ],
@@ -200,7 +273,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildLikedMoviesSection(BuildContext context) {
-    return BlocBuilder<MovieBloc, MovieState>(
+    return BlocBuilder<ProfileBloc, ProfileState>(
       builder: (context, state) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -219,32 +292,61 @@ class _ProfilePageState extends State<ProfilePage> {
 
               const SizedBox(height: 16),
 
-              // Show movies grid or empty state
-              if (state is FavoriteMoviesLoaded &&
-                  state.favoriteMovies.isNotEmpty) ...[
-                // Movies Grid
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio:
-                        0.7, // Adjust for movie poster aspect ratio
+              // Show movies based on state
+              if (state is ProfileLoading) ...[
+                // Loading state
+                const Center(child: CircularProgressIndicator()),
+                const SizedBox(height: 100),
+              ] else if (state is ProfileLoaded) ...[
+                if (state.favoriteMovies.isNotEmpty) ...[
+                  // Movies Grid
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.7,
+                        ),
+                    itemCount: state.favoriteMovies.length > 4
+                        ? 4
+                        : state.favoriteMovies.length,
+                    itemBuilder: (context, index) {
+                      return _buildFavoriteMovieCard(
+                        state.favoriteMovies[index],
+                      );
+                    },
                   ),
-                  itemCount: state.favoriteMovies.length > 4
-                      ? 4
-                      : state.favoriteMovies.length,
-                  itemBuilder: (context, index) {
-                    return _buildFavoriteMovieCard(state.favoriteMovies[index]);
-                  },
+                ] else ...[
+                  // Empty state - just empty space
+                  const SizedBox(height: 100),
+                ],
+              ] else if (state is ProfileError) ...[
+                // Error state
+                SizedBox(
+                  height: 100,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline, color: Colors.red, size: 32),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Filmler yüklenirken hata oluştu',
+                          style: TextStyle(
+                            color: Colors.grey.shade400,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ] else ...[
-                // Empty state - just show empty space
-                const SizedBox(
-                  height: 100,
-                ), // Add some space where movies would be
+                // Default empty state
+                const SizedBox(height: 100),
               ],
 
               const SizedBox(height: 20),
@@ -256,94 +358,11 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildFavoriteMovieCard(Movie movie) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Movie Poster
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                movie.posterUrl,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: Colors.grey.shade800,
-                    child: const Icon(
-                      Icons.movie,
-                      color: Colors.white54,
-                      size: 40,
-                    ),
-                  );
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    color: Colors.grey.shade800,
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.red,
-                        strokeWidth: 2,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 8),
-
-        // Movie Title
-        Text(
-          movie.title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-
-        // Movie Description (if available)
-        if (movie.description.isNotEmpty) ...[
-          const SizedBox(height: 2),
-          Text(
-            movie.description,
-            style: TextStyle(
-              color: Colors.grey.shade400,
-              fontSize: 11,
-              fontWeight: FontWeight.w400,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ],
-    );
-  }
-
-  void _showLimitedOfferBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const LimitedOfferBottomSheet(),
+    return FavoriteMovieCard(
+      movie: movie,
+      onTap: () {
+        // TODO: Navigate to movie details
+      },
     );
   }
 }
